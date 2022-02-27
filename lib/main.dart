@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import './models/transaction.dart';
@@ -99,80 +102,101 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     var mq = MediaQuery.of(context);
     bool isLandScape = mq.orientation == Orientation.landscape;
-    var appBar = AppBar(
-      title: const Text(
-        'Personal Expenses',
-      ),
-      actions: <Widget>[
-        IconButton(
-          icon: const Icon(Icons.add),
-          onPressed: () => _startAddNewTransaction(context),
-        ),
-      ],
-    );
+
+    dynamic appBar = Platform.isIOS
+        ? CupertinoNavigationBar(
+            middle: const Text(
+              'Personal Expenses',
+            ),
+            trailing: IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () => _startAddNewTransaction(context),
+            ),
+          )
+        : AppBar(
+            title: const Text(
+              'Personal Expenses',
+            ),
+            actions: <Widget>[
+              IconButton(
+                icon: const Icon(Icons.add),
+                onPressed: () => _startAddNewTransaction(context),
+              ),
+            ],
+          );
 
     var chart = Chart(_recentTransactions);
     var transactionList =
         TransactionList(_userTransactions, _deleteTransaction);
-    return Scaffold(
-      appBar: appBar,
-      body: SingleChildScrollView(
-        child: Column(
-          // mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            if (isLandScape)
-              SwitchListTile(
-                value: showChart,
-                onChanged: (bool newVal) {
-                  setState(
-                    () {
-                      showChart = newVal;
-                    },
-                  );
-                },
-                title: const Text('Show Chart'),
-              ),
-            //
-            if (!isLandScape)
-              SizedBox(
-                child: chart,
-                height: (mq.size.height -
-                        appBar.preferredSize.height -
-                        mq.padding.top) *
-                    0.3,
-              ),
-            //
-            isLandScape
-                ? showChart
-                    ? SizedBox(
-                        height: (mq.size.height -
-                                appBar.preferredSize.height -
-                                mq.padding.top) *
-                            0.7,
-                        child: chart,
-                      )
-                    : SizedBox(
-                        child: transactionList,
-                        height: (mq.size.height -
-                            appBar.preferredSize.height -
-                            mq.padding.top),
-                      )
-                : SizedBox(
-                    child: transactionList,
-                    height: (mq.size.height -
-                            appBar.preferredSize.height -
-                            mq.padding.top) *
-                        0.7,
-                  ),
-          ],
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add),
-        onPressed: () => _startAddNewTransaction(context),
+    var contentBody = SingleChildScrollView(
+      child: Column(
+        // mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          if (isLandScape)
+            SwitchListTile.adaptive(
+              value: showChart,
+              onChanged: (bool newVal) {
+                setState(
+                  () {
+                    showChart = newVal;
+                  },
+                );
+              },
+              title: const Text('Show Chart'),
+            ),
+
+          //
+          if (!isLandScape)
+            SizedBox(
+              child: chart,
+              height: (mq.size.height -
+                      appBar.preferredSize.height -
+                      mq.padding.top) *
+                  0.3,
+            ),
+          //
+          isLandScape
+              ? showChart
+                  ? SizedBox(
+                      height: (mq.size.height -
+                              appBar.preferredSize.height -
+                              mq.padding.top) *
+                          0.7,
+                      child: chart,
+                    )
+                  : SizedBox(
+                      child: transactionList,
+                      height: (mq.size.height -
+                          appBar.preferredSize.height -
+                          mq.padding.top),
+                    )
+              : SizedBox(
+                  child: transactionList,
+                  height: (mq.size.height -
+                          appBar.preferredSize.height -
+                          mq.padding.top) *
+                      0.7,
+                ),
+        ],
       ),
     );
+    return Platform.isAndroid
+        ? Scaffold(
+            appBar: appBar,
+            body: contentBody,
+            floatingActionButtonLocation:
+                FloatingActionButtonLocation.centerFloat,
+            floatingActionButton: Platform.isAndroid
+                ? FloatingActionButton(
+                    child: const Icon(Icons.add),
+                    onPressed: () => _startAddNewTransaction(context),
+                  )
+                : Container(),
+          )
+        : CupertinoPageScaffold(
+            navigationBar: appBar,
+            child: contentBody,
+          );
   }
 }
