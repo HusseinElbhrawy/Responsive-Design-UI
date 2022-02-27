@@ -5,9 +5,13 @@ import './widgets/chart.dart';
 import './widgets/new_transaction.dart';
 import './widgets/transaction_list.dart';
 
-void main() => runApp(MyApp());
+void main() {
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -32,39 +36,25 @@ class MyApp extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           )),
-      home: MyHomePage(),
+      home: const MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  // String titleInput;
-  // String amountInput;
+  const MyHomePage({Key? key}) : super(key: key);
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final List<Transaction> _userTransactions = [
-    // Transaction(
-    //   id: 't1',
-    //   title: 'New Shoes',
-    //   amount: 69.99,
-    //   date: DateTime.now(),
-    // ),
-    // Transaction(
-    //   id: 't2',
-    //   title: 'Weekly Groceries',
-    //   amount: 16.53,
-    //   date: DateTime.now(),
-    // ),
-  ];
+  final List<Transaction> _userTransactions = [];
 
   List<Transaction> get _recentTransactions {
     return _userTransactions.where((tx) {
       return tx.date.isAfter(
         DateTime.now().subtract(
-          Duration(days: 7),
+          const Duration(days: 7),
         ),
       );
     }).toList();
@@ -103,33 +93,84 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  bool showChart = false;
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Personal Expenses',
-        ),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.add),
-            onPressed: () => _startAddNewTransaction(context),
-          ),
-        ],
+    var mq = MediaQuery.of(context);
+    bool isLandScape = mq.orientation == Orientation.landscape;
+    var appBar = AppBar(
+      title: const Text(
+        'Personal Expenses',
       ),
+      actions: <Widget>[
+        IconButton(
+          icon: const Icon(Icons.add),
+          onPressed: () => _startAddNewTransaction(context),
+        ),
+      ],
+    );
+
+    var chart = Chart(_recentTransactions);
+    var transactionList =
+        TransactionList(_userTransactions, _deleteTransaction);
+    return Scaffold(
+      appBar: appBar,
       body: SingleChildScrollView(
         child: Column(
           // mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Chart(_recentTransactions),
-            TransactionList(_userTransactions, _deleteTransaction),
+            if (isLandScape)
+              SwitchListTile(
+                value: showChart,
+                onChanged: (bool newVal) {
+                  setState(
+                    () {
+                      showChart = newVal;
+                    },
+                  );
+                },
+                title: const Text('Show Chart'),
+              ),
+            //
+            if (!isLandScape)
+              SizedBox(
+                child: chart,
+                height: (mq.size.height -
+                        appBar.preferredSize.height -
+                        mq.padding.top) *
+                    0.3,
+              ),
+            //
+            isLandScape
+                ? showChart
+                    ? SizedBox(
+                        height: (mq.size.height -
+                                appBar.preferredSize.height -
+                                mq.padding.top) *
+                            0.7,
+                        child: chart,
+                      )
+                    : SizedBox(
+                        child: transactionList,
+                        height: (mq.size.height -
+                            appBar.preferredSize.height -
+                            mq.padding.top),
+                      )
+                : SizedBox(
+                    child: transactionList,
+                    height: (mq.size.height -
+                            appBar.preferredSize.height -
+                            mq.padding.top) *
+                        0.7,
+                  ),
           ],
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
         onPressed: () => _startAddNewTransaction(context),
       ),
     );
